@@ -7,6 +7,7 @@
 <!-- Firebase Realtime Database -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
   --navy:#1a2744;--navy2:#243055;--amber:#e8800a;--amber2:#f5a623;
@@ -295,11 +296,15 @@ tr.late-row td{background:#fff8f8}
     </div>
   </div>
 
-  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+  <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
     <button class="btn btn-sec" id="rtab-worker" onclick="setRTab('worker')">Theo công nhân</button>
-    <button class="btn btn-primary" id="rtab-team" onclick="setRTab('team')" style="display:none" >Theo đội</button>
+    <button class="btn btn-sec" id="rtab-team" onclick="setRTab('team')">Theo đội</button>
     <button class="btn btn-sec" id="rtab-cat" onclick="setRTab('cat')">Theo hạng mục</button>
     <button class="btn btn-sec" id="rtab-daily" onclick="setRTab('daily')">Theo ngày</button>
+  </div>
+  <div style="margin-bottom:14px">
+    <button class="btn btn-green btn-sm" onclick="exportExcel()">📥 Xuất Excel (tab đang xem)</button>
+    <button class="btn btn-sec btn-sm" style="margin-left:6px" onclick="exportAllExcel()">📦 Xuất tất cả (4 sheet)</button>
   </div>
 
   <div id="report-worker" class="report-tab"></div>
@@ -1387,6 +1392,139 @@ async function init(){
     document.getElementById('fb-url-input').value=savedUrl;
     await _initFirebase(savedUrl);
   }
+}
+
+// ══════════════════════════════════════════════════════
+// EXCEL EXPORT
+// ══════════════════════════════════════════════════════
+function _getReportRange(){
+  return {
+    from: document.getElementById('r-from').value,
+    to:   document.getElementById('r-to').value
+  };
+}
+
+function _sheetWorker(from, to){
+  const entries = getEntriesInRange(from, to);
+  let map = {};
+  entries.forEach(e=>{
+    if(!map[e.wid]) map[e.wid]={shifts:0,pay:0,tc:0};
+    const w=getWorker(e.wid);
+    map[e.wid].shifts += calcShifts(e.s,e.c);
+    map[e.wid].pay   += calcPay(w.rate,e.s,e.c,e.tc);
+    map[e.wid].tc    += parseFloat(e.tc)||0;
+  });
+  const rows = [['STT','Công nhân','Đội','Sáng+Chiều','Tăng ca (h)','Lương (đồng)']];
+  Object.entries(map).sort((a,b)=>b[1].shifts-a[1].shifts).forEach(([wid,v],i)=>{
+    const w=getWorker(wid);
+    rows.push([i+1, w.name, getTeam(w.team).name, +v.shifts.toFixed(1), +v.tc.toFixed(1), Math.round(v.pay)]);
+  });
+  const total = Object.values(map).reduce((s,v)=>({shifts:s.shifts+v.shifts,pay:s.pay+v.pay}),{shifts:0,pay:0});
+  rows.push(['','TỔNG CỘNG','', +total.shifts.toFixed(1), '', Math.round(total.pay)]);
+  return rows;
+}
+
+function _sheetTeam(from, to){
+  const entries = getEntriesInRange(from, to);
+  let map = {};
+  entries.forEach(e=>{
+    const w=getWorker(e.wid); const tid=w.team;
+    if(!map[tid]) map[tid]={shifts:0,pay:0,tc:0};
+    map[tid].shifts += calcShifts(e.s,e.c);
+    map[tid].pay   += calcPay(w.rate,e.s,e.c,e.tc);
+    map[tid].tc    += parseFloat(e.tc)||0;
+  });
+  const rows = [['STT','Đội','Tổng công','Tăng ca (h)','Lương (đồng)']];
+  Object.entries(map).sort((a,b)=>b[1].shifts-a[1].shifts).forEach(([tid,v],i)=>{
+    rows.push([i+1, getTeam(tid).name, +v.shifts.toFixed(1), +v.tc.toFixed(1), Math.round(v.pay)]);
+  });
+  return rows;
+}
+
+function _sheetCat(from, to){
+  const entries = getEntriesInRange(from, to);
+  let map = {};
+  entries.forEach(e=>{
+    if(!e.cat) return;
+    if(!map[e.cat]) map[e.cat]={shifts:0,pay:0};
+    const s=calcShifts(e.s,e.c);
+    map[e.cat].shifts += s;
+    map[e.cat].pay   += s * getCat(e.cat).price;
+  });
+  const rows = [['STT','Hạng mục','Nhóm','ĐVT','Đơn giá','Tổng công','Thành tiền (đ)']];
+  Object.entries(map).sort((a,b)=>b[1].shifts-a[1].shifts).forEach(([cid,v],i)=>{
+    const c=getCat(cid);
+    rows.push([i+1, c.name, c.group||'', c.unit, c.price, +v.shifts.toFixed(1), Math.round(v.pay)]);
+  });
+  return rows;
+}
+
+function _sheetDaily(from, to){
+  const rows = [['Ngày','Số CN','Tổng công','Lương (đ)','Nộp lúc','Giám sát','Trạng thái']];
+  const dates = Object.keys(DB.entries).filter(d=>d>=from&&d<=to).sort();
+  dates.forEach(d=>{
+    const dayE=DB.entries[d]||[];
+    let shifts=0,pay=0;
+    dayE.forEach(e=>{const w=getWorker(e.wid);shifts+=calcShifts(e.s,e.c);pay+=calcPay(w.rate,e.s,e.c,e.tc);});
+    const log=LOGS[d];
+    rows.push([
+      d, dayE.length, +shifts.toFixed(1), Math.round(pay),
+      log?log.submittedAt:'', log?log.gsName:'',
+      log?(log.isLate?`Trễ ${log.daysLate} ngày`:'Đúng hạn'):''
+    ]);
+  });
+  return rows;
+}
+
+function _applyHeaderStyle(ws, headerRow){
+  // Bold + bg cho header row
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for(let c=range.s.c; c<=range.e.c; c++){
+    const cell = ws[XLSX.utils.encode_cell({r:headerRow, c})];
+    if(cell) cell.s = {font:{bold:true}, fill:{fgColor:{rgb:'1A2744'}}, font:{bold:true,color:{rgb:'FFFFFF'}}};
+  }
+}
+
+function _makeSheet(rows){
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  // Auto column width
+  const cols = rows[0].map((_,ci)=>({
+    wch: Math.max(...rows.map(r=>String(r[ci]||'').length), 8)
+  }));
+  ws['!cols'] = cols;
+  return ws;
+}
+
+function exportExcel(){
+  const {from,to} = _getReportRange();
+  if(!from||!to){toast('Chọn khoảng thời gian trước',true);return;}
+  const wb = XLSX.utils.book_new();
+  const label = `${from}_${to}`;
+
+  if(rTab==='worker'){
+    XLSX.utils.book_append_sheet(wb, _makeSheet(_sheetWorker(from,to)), 'Theo công nhân');
+  }else if(rTab==='team'){
+    XLSX.utils.book_append_sheet(wb, _makeSheet(_sheetTeam(from,to)), 'Theo đội');
+  }else if(rTab==='cat'){
+    XLSX.utils.book_append_sheet(wb, _makeSheet(_sheetCat(from,to)), 'Theo hạng mục');
+  }else if(rTab==='daily'){
+    XLSX.utils.book_append_sheet(wb, _makeSheet(_sheetDaily(from,to)), 'Theo ngày');
+  }
+  XLSX.writeFile(wb, `BCH_BaoCao_${rTab}_${label}.xlsx`);
+  toast('✅ Đã xuất Excel');
+}
+
+function exportAllExcel(){
+  const {from,to} = _getReportRange();
+  if(!from||!to){toast('Chọn khoảng thời gian trước',true);return;}
+  const wb = XLSX.utils.book_new();
+  const label = `${from}_${to}`;
+  XLSX.utils.book_append_sheet(wb, _makeSheet(_sheetWorker(from,to)), 'Theo công nhân');
+  XLSX.utils.book_append_sheet(wb, _makeSheet(_sheetTeam(from,to)),   'Theo đội');
+  XLSX.utils.book_append_sheet(wb, _makeSheet(_sheetCat(from,to)),    'Theo hạng mục');
+  XLSX.utils.book_append_sheet(wb, _makeSheet(_sheetDaily(from,to)),  'Theo ngày');
+  XLSX.writeFile(wb, `BCH_BaoCao_TatCa_${label}.xlsx`);
+  toast('✅ Đã xuất Excel đầy đủ 4 sheet');
 }
 
 window.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
