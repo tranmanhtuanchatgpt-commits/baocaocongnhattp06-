@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Báo Cáo Công Nhật – BCH Wealthcons</title>
+<!-- Firebase Realtime Database -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --navy:#1a2744;--navy2:#243055;--amber:#e8800a;--amber2:#f5a623;
+  --bg:#f4f5f7;--card:#fff;--border:#e0e3ea;--txt:#1a2744;--txt2:#5a6480;
+  --red:#d93025;--green:#2d7d46;--blue:#1565c0;
+  --radius:10px;--shadow:0 2px 8px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;font-size:15px}
+/* NAV */
+nav{background:var(--navy);position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.nav-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;padding:0 12px}
+.nav-logo{color:#fff;font-size:15px;font-weight:700;padding:14px 0;flex-shrink:0;letter-spacing:.3px}
+.nav-logo span{color:var(--amber2)}
+.nav-tabs{display:flex;gap:2px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{color:rgba(255,255,255,.65);padding:14px 14px;cursor:pointer;font-size:13px;font-weight:500;white-space:nowrap;border-bottom:3px solid transparent;transition:.15s}
+.nav-tab:hover{color:#fff}
+.nav-tab.active{color:#fff;border-bottom-color:var(--amber2)}
+/* LAYOUT */
+.page{display:none;max-width:960px;margin:0 auto;padding:20px 14px 60px}
+.page.show{display:block}
+h1{font-size:20px;font-weight:700;margin-bottom:4px}
+.sub{color:var(--txt2);font-size:13px;margin-bottom:20px}
+/* CARD */
+.card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card-title{font-size:13px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+/* STATS ROW */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center}
+.stat-val{font-size:22px;font-weight:700;color:var(--navy)}
+.stat-lbl{font-size:11px;color:var(--txt2);margin-top:2px;text-transform:uppercase;letter-spacing:.4px}
+/* FORM */
+label{display:block;font-size:13px;font-weight:600;color:var(--txt2);margin-bottom:5px}
+input,select,textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;font-size:14px;background:#fff;color:var(--txt);font-family:inherit;transition:.15s;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(232,128,10,.12)}
+.form-row{margin-bottom:14px}
+.form-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:480px){.form-2{grid-template-columns:1fr}}
+/* BUTTON */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:.15s}
+.btn-primary{background:var(--amber);color:#fff}
+.btn-primary:hover{background:var(--amber2)}
+.btn-sec{background:var(--card);color:var(--txt);border:1.5px solid var(--border)}
+.btn-sec:hover{background:var(--bg)}
+.btn-danger{background:#ffeaea;color:var(--red);border:1px solid #fbb}
+.btn-danger:hover{background:#ffdede}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-green{background:#e6f4ea;color:var(--green);border:1px solid #b7dfc0}
+.btn-green:hover{background:#d0ecda}
+/* TABLE */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--navy);color:#fff;padding:9px 10px;text-align:left;font-weight:600;font-size:12px}
+td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:hover td{background:#fafbff}
+.tbl-num{text-align:right}
+.tbl-center{text-align:center}
+/* BADGE */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-amber{background:#fff3e0;color:#e65100}
+.badge-blue{background:#e3f2fd;color:#0d47a1}
+.badge-green{background:#e8f5e9;color:#1b5e20}
+.badge-red{background:#ffebee;color:#b71c1c}
+.badge-gray{background:#f5f5f5;color:#555}
+/* WORKER ENTRY ROW */
+.worker-row{display:grid;align-items:center;border-bottom:1px solid var(--border);padding:8px 0;gap:6px}
+.worker-row:last-child{border-bottom:none}
+.wr-name{font-weight:600;font-size:13px;min-width:120px}
+.wr-doi{font-size:11px;color:var(--txt2)}
+.shift-group{display:flex;gap:5px;align-items:center}
+.shift-btn{width:36px;height:30px;border:1.5px solid var(--border);background:#fff;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;transition:.12s}
+.shift-btn.active-s{background:#1565c0;color:#fff;border-color:#1565c0}
+.shift-btn.active-c{background:var(--green);color:#fff;border-color:var(--green)}
+.shift-btn.active-tc{background:var(--amber);color:#fff;border-color:var(--amber)}
+.tc-input{width:52px;border:1.5px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;text-align:center}
+.wr-cat{flex:1}
+.wr-cat select{font-size:12px;padding:5px 8px;height:32px}
+/* SECTION HEADER */
+.sec-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+/* SEARCH */
+.search-row{display:flex;gap:8px;margin-bottom:14px}
+.search-row input{flex:1}
+/* TAG */
+.team-tag{font-size:11px;background:rgba(26,39,68,.08);color:var(--navy);border-radius:4px;padding:1px 7px;display:inline-block}
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy);color:#fff;padding:11px 22px;border-radius:24px;font-size:13px;font-weight:600;transition:.3s;opacity:0;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,.25);pointer-events:none}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+/* SUMMARY CARDS */
+.sum-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:8px}
+.sum-name{font-weight:700;font-size:14px}
+.sum-meta{font-size:12px;color:var(--txt2);margin-top:2px}
+.sum-bar{display:flex;gap:16px;margin-top:8px;flex-wrap:wrap}
+.sum-item{text-align:center}
+.sum-item .val{font-size:16px;font-weight:700;color:var(--navy)}
+.sum-item .lbl{font-size:10px;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px}
+/* ACCORDION */
+.accord-hdr{cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);font-weight:600;font-size:14px}
+.accord-body{display:none;padding:10px 0}
+.accord-body.open{display:block}
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:14px}
+.modal-bg.show{display:flex}
+.modal{background:#fff;border-radius:12px;padding:22px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.modal h2{font-size:17px;margin-bottom:16px}
+/* PRINT */
+@media print{nav,#toast,.btn{display:none}}
+/* Empty state */
+.empty{text-align:center;padding:40px 20px;color:var(--txt2)}
+.empty-ico{font-size:40px;margin-bottom:10px}
+/* Color dot */
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:4px}
+/* Firebase status */
+#fb-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,.55);margin-left:10px}
+#fb-dot{width:8px;height:8px;border-radius:50%;background:#555;display:inline-block;transition:.3s}
+#fb-dot.on{background:#4caf50;box-shadow:0 0 5px #4caf50}
+#fb-dot.err{background:#f44336}
+/* Late badges */
+.badge-ok{background:#e8f5e9;color:#2d7d46;border:1px solid #b7dfc0}
+.badge-late{background:#ffebee;color:#c62828;border:1px solid #ffcdd2}
+tr.late-row td{background:#fff8f8}
+/* Setup card */
+.setup-box{background:#e3f2fd;border:1px solid #90caf9;border-radius:8px;padding:14px;font-size:13px;line-height:1.8;color:#0d47a1}
+.setup-box b{color:#1565c0}
+.setup-box ol{margin-left:18px}
+.setup-box code{background:#fff;border:1px solid #90caf9;border-radius:4px;padding:1px 6px;font-size:12px}
+/* Responsive worker grid */
+.worker-row{grid-template-columns:140px auto 1fr}
+@media(max-width:600px){.worker-row{grid-template-columns:1fr;grid-template-rows:auto}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">BCH <span>WEALTHCONS</span>
+      <span id="fb-status"><span id="fb-dot"></span><span id="fb-txt">Offline</span></span>
+    </div>
+    <div class="nav-tabs">
+      <div class="nav-tab active" onclick="goPage('dashboard')">Tổng quan</div>
+      <div class="nav-tab" onclick="goPage('entry')">Nhập công</div>
+      <div class="nav-tab" onclick="goPage('report')">Báo cáo</div>
+      <div class="nav-tab" onclick="goPage('settings')">Cài đặt</div>
+    </div>
+  </div>
+</nav>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ═══════════════ PAGE: DASHBOARD ═══════════════ -->
+<div class="page show" id="page-dashboard">
+  <h1>Tổng quan</h1>
+  <p class="sub" id="dash-period">Chọn kỳ để xem thống kê</p>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="form-2">
+      <div class="form-row" style="margin:0">
+        <label>Từ ngày</label>
+        <input type="date" id="dash-from" onchange="renderDash()">
+      </div>
+      <div class="form-row" style="margin:0">
+        <label>Đến ngày</label>
+        <input type="date" id="dash-to" onchange="renderDash()">
+      </div>
+    </div>
+  </div>
+
+  <div class="stats" id="dash-stats">
+    <div class="stat"><div class="stat-val" id="ds-days">0</div><div class="stat-lbl">Ngày có báo cáo</div></div>
+    <div class="stat"><div class="stat-val" id="ds-workers">0</div><div class="stat-lbl">Lượt công nhân</div></div>
+    <div class="stat"><div class="stat-val" id="ds-shifts">0</div><div class="stat-lbl">Tổng công</div></div>
+    <div class="stat"><div class="stat-val" id="ds-money">0</div><div class="stat-lbl">Lương (triệu đ)</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Top công nhân theo tổng công</div>
+    <div id="dash-top" class="tbl-wrap">
+      <div class="empty"><div class="empty-ico">📋</div>Chưa có dữ liệu. Nhập báo cáo công nhật để xem thống kê.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Tổng hợp theo đội</div>
+    <div id="dash-teams" class="tbl-wrap">
+      <div class="empty"><div class="empty-ico">👥</div>Chưa có dữ liệu.</div>
+    </div>
+  </div>
+
+  <!-- ★ MỚI: Lịch sử nộp báo cáo -->
+  <div class="card">
+    <div class="sec-hdr">
+      <div class="card-title" style="margin:0">📋 Lịch sử nộp báo cáo</div>
+      <span style="font-size:12px;color:var(--txt2)">Tự động cập nhật</span>
+    </div>
+    <div style="font-size:12px;color:var(--txt2);margin-bottom:10px">
+      Nộp <b>sau ngày báo cáo</b> = <span class="badge badge-late">Trễ</span>. Hiện 60 ngày gần nhất.
+    </div>
+    <div id="dash-logs" class="tbl-wrap">
+      <div class="empty"><div class="empty-ico">📅</div>Chưa có lịch sử.</div>
+    </div>
+    <div id="late-stats" style="margin-top:12px;display:none">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <div class="stat" style="flex:1;min-width:90px;padding:10px">
+          <div class="stat-val" id="ls-total" style="font-size:18px">0</div>
+          <div class="stat-lbl">Tổng ngày BC</div>
+        </div>
+        <div class="stat" style="flex:1;min-width:90px;padding:10px;border-color:#ffcdd2">
+          <div class="stat-val" id="ls-late" style="font-size:18px;color:var(--red)">0</div>
+          <div class="stat-lbl">Nộp trễ</div>
+        </div>
+        <div class="stat" style="flex:1;min-width:90px;padding:10px;border-color:#b7dfc0">
+          <div class="stat-val" id="ls-ok" style="font-size:18px;color:var(--green)">0</div>
+          <div class="stat-lbl">Đúng hạn</div>
+        </div>
+      </div>
+      <div id="late-by-gs"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PAGE: ENTRY ═══════════════ -->
+<div class="page" id="page-entry">
+  <h1>Nhập công nhật</h1>
+  <p class="sub">Nhập theo ngày – S (sáng) / C (chiều) / TC (tăng ca giờ)</p>
+
+  <div class="card">
+    <div class="form-2">
+      <div class="form-row" style="margin:0">
+        <label>Ngày</label>
+        <input type="date" id="e-date" onchange="checkLateWarn()">
+      </div>
+      <div class="form-row" style="margin:0">
+        <label>Giám sát phụ trách</label>
+        <select id="e-gs"></select>
+      </div>
+    </div>
+    <div class="form-row" style="margin-top:12px">
+      <label>Lọc theo đội</label>
+      <select id="e-team-filter" onchange="renderEntryWorkers()">
+        <option value="">-- Tất cả đội --</option>
+      </select>
+    </div>
+    <!-- Cảnh báo nộp trễ -->
+    <div id="late-warn" style="display:none;margin-top:10px;background:#fff3e0;border:1px solid #ffcc80;border-radius:8px;padding:10px;font-size:13px;color:#e65100">
+      ⚠️ <b>Cảnh báo nộp trễ:</b> Hôm nay <b id="lw-today"></b> nhưng đang nhập cho ngày <b id="lw-date"></b>. Khi lưu sẽ bị tính là <b>nộp trễ</b>.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="sec-hdr">
+      <div class="card-title" style="margin:0">Danh sách công nhân</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sec btn-sm" onclick="loadPrevEntry()">📂 Nạp ngày trước</button>
+        <button class="btn btn-primary" onclick="saveEntry()">💾 Lưu báo cáo</button>
+      </div>
+    </div>
+    <div style="margin-bottom:10px;font-size:12px;color:var(--txt2)">
+      <b>S</b> = Sáng &nbsp;|&nbsp; <b>C</b> = Chiều &nbsp;|&nbsp; <b>TC</b> = Tăng ca (giờ) &nbsp;|&nbsp; Bấm 0/0.5/1 để chọn
+    </div>
+    <div id="entry-workers"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ PAGE: REPORT ═══════════════ -->
+<div class="page" id="page-report">
+  <h1>Báo cáo tổng hợp</h1>
+  <p class="sub">Xem tổng hợp theo công nhân, đội hoặc hạng mục</p>
+
+  <div class="card">
+    <div class="form-2">
+      <div class="form-row" style="margin:0">
+        <label>Từ ngày</label>
+        <input type="date" id="r-from">
+      </div>
+      <div class="form-row" style="margin:0">
+        <label>Đến ngày</label>
+        <input type="date" id="r-to">
+      </div>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-sec btn-sm" onclick="setRangeCurrent()">Kỳ hiện tại</button>
+      <button class="btn btn-sec btn-sm" onclick="setRangeMonth()">Tháng này</button>
+      <button class="btn btn-sec btn-sm" onclick="setRangePrev()">Kỳ trước</button>
+      <button class="btn btn-primary btn-sm" onclick="renderReport()">🔍 Xem báo cáo</button>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+    <button class="btn btn-sec" id="rtab-worker" onclick="setRTab('worker')">Theo công nhân</button>
+    <button class="btn btn-sec" id="rtab-team" onclick="setRTab('team')">Theo đội</button>
+    <button class="btn btn-sec" id="rtab-cat" onclick="setRTab('cat')">Theo hạng mục</button>
+    <button class="btn btn-sec" id="rtab-daily" onclick="setRTab('daily')">Theo ngày</button>
+  </div>
+  <div style="margin-bottom:14px">
+    <button class="btn btn-green btn-sm" onclick="exportExcel()">📥 Xuất Excel (tab đang xem)</button>
+    <button class="btn btn-sec btn-sm" style="margin-left:6px" onclick="exportAllExcel()">📦 Xuất tất cả (4 sheet)</button>
+  </div>
+
+  <div id="report-worker" class="report-tab"></div>
+  <div id="report-team" class="report-tab" style="display:none"></div>
+  <div id="report-cat" class="report-tab" style="display:none"></div>
+  <div id="report-daily" class="report-tab" style="display:none"></div>
+</div>
+
+<!-- ═══════════════ PAGE: SETTINGS ═══════════════ -->
+<div class="page" id="page-settings">
+  <h1>Cài đặt</h1>
+  <p class="sub">Quản lý danh sách đội, công nhân, giám sát và hạng mục</p>
+
+  <!-- ★ Firebase Setup -->
+  <div class="card">
+    <div class="card-title">🔥 Kết nối Firebase – Đồng bộ thời gian thực</div>
+    <div id="fb-setup-status" style="padding:10px;border-radius:8px;font-size:13px;margin-bottom:12px;background:#f5f5f5;color:#555">
+      ⚫ Chưa kết nối – đang dùng dữ liệu cục bộ trên máy này
+    </div>
+    <div class="setup-box" style="margin-bottom:14px">
+      <b>📌 Hướng dẫn thiết lập Firebase (làm 1 lần duy nhất):</b>
+      <ol>
+        <li>Vào <b>console.firebase.google.com</b> → chọn project của bạn</li>
+        <li>Menu trái: <b>Build → Realtime Database → Create database</b></li>
+        <li>Chọn vùng <b>Singapore</b> → <b>Start in test mode</b> → Enable</li>
+        <li>Sau khi tạo xong, copy <b>Database URL</b> (dạng: <code>https://TÊN-default-rtdb.asia-southeast1.firebasedatabase.app</code>)</li>
+        <li>Dán URL vào ô bên dưới → Bấm <b>Kết nối & Lưu</b></li>
+      </ol>
+      <div style="margin-top:8px;font-size:12px">⚠️ <b>Quy tắc bảo mật:</b> Trong Firebase Console → Realtime Database → Rules → đảm bảo có: <code>"read": true, "write": true</code></div>
+    </div>
+    <div class="form-row">
+      <label>Database URL</label>
+      <input type="text" id="fb-url-input" placeholder="https://tên-project-default-rtdb.asia-southeast1.firebasedatabase.app">
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="connectFirebase()">🔥 Kết nối & Lưu</button>
+      <button class="btn btn-sec btn-sm" onclick="disconnectFirebase()">Ngắt kết nối</button>
+    </div>
+  </div>
+
+  <!-- Teams -->
+  <div class="card">
+    <div class="sec-hdr">
+      <div class="card-title" style="margin:0">Danh sách đội</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('team')">+ Thêm đội</button>
+    </div>
+    <div id="s-teams"></div>
+  </div>
+
+  <!-- Supervisors -->
+  <div class="card">
+    <div class="sec-hdr">
+      <div class="card-title" style="margin:0">Giám sát (GS)</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('gs')">+ Thêm GS</button>
+    </div>
+    <div id="s-gs"></div>
+  </div>
+
+  <!-- Workers -->
+  <div class="card">
+    <div class="sec-hdr">
+      <div class="card-title" style="margin:0">Danh sách công nhân</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('worker')">+ Thêm công nhân</button>
+    </div>
+    <div class="search-row">
+      <input type="text" id="s-w-search" placeholder="Tìm tên..." oninput="renderSettingsWorkers()">
+      <select id="s-w-team" onchange="renderSettingsWorkers()">
+        <option value="">Tất cả đội</option>
+      </select>
+    </div>
+    <div id="s-workers" class="tbl-wrap"></div>
+  </div>
+
+  <!-- Categories -->
+  <div class="card">
+    <div class="sec-hdr">
+      <div class="card-title" style="margin:0">Hạng mục công việc</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('cat')">+ Thêm hạng mục</button>
+    </div>
+    <div id="s-cats" class="tbl-wrap"></div>
+  </div>
+
+  <!-- Data -->
+  <div class="card">
+    <div class="card-title">Dữ liệu</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-sec btn-sm" onclick="exportData()">📤 Xuất JSON</button>
+      <button class="btn btn-sec btn-sm" onclick="document.getElementById('imp-file').click()">📥 Nhập JSON</button>
+      <input type="file" id="imp-file" accept=".json" style="display:none" onchange="importData(this)">
+      <button class="btn btn-danger btn-sm" onclick="clearAll()">🗑 Xóa toàn bộ báo cáo</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-box">
+    <h2 id="modal-title">Thêm mới</h2>
+    <div id="modal-body"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+      <button class="btn btn-sec" onclick="closeModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="modalSave()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+let DB = {
+  teams:[],gs:[],workers:[],categories:[],
+  entries:{} // key="YYYY-MM-DD", val=[{wid,gs,s,c,tc,cat,note}]
+};
+let LOGS = {}; // key="YYYY-MM-DD", val={reportDate,submittedAt,gsId,gsName,isLate,daysLate}
+let modalType='', modalIdx=-1;
+let rTab='worker';
+
+// ══════════════════════════════════════════════════════
+// FIREBASE STATE
+// ══════════════════════════════════════════════════════
+let fbDb = null;
+
+// ══════════════════════════════════════════════════════
+// DEFAULT DATA – GIỮ NGUYÊN 100% từ file gốc
+// ══════════════════════════════════════════════════════
+const DEFAULT = {
+  teams:[
+    {id:'t1',name:'Đội Minh',leader:'Nguyễn Hữu Minh'},
+    {id:'t2',name:'Đội Nghĩa',leader:'Nguyễn Ngọc Nghĩa'},
+    {id:'t3',name:'Đội Khoa',leader:'Phan Đức Khoa'},
+    {id:'t4',name:'BCH',leader:'Ban Chỉ Huy'},
+    {id:'t5',name:'Đội Tưởng',leader:'Phan Văn Tưởng'},
+    {id:'t6',name:'Điện – Nước tạm',leader:''},
+  ],
+  gs:[
+    {id:'g1',name:'GS Tài'},{id:'g2',name:'GS Lưu'},{id:'g3',name:'GS Hưng'},
+    {id:'g4',name:'GS Hải'},{id:'g5',name:'GS Tuấn'},{id:'g6',name:'GS Duy'},
+    {id:'g7',name:'GS Quang'},{id:'g8',name:'GS Phúc'},{id:'g9',name:'GS Bảo'},
+    {id:'g10',name:'GS Kiên'},
+  ],
+  workers:[
+    // Đội Minh
+    {id:'w1',name:'Nguyễn Hữu Minh',team:'t1',rate:500000},
+    {id:'w2',name:'Phạm Văn Ly',team:'t1',rate:400000},
+    {id:'w3',name:'Trần Văn Mẹo',team:'t1',rate:400000},
+    {id:'w4',name:'Nguyễn Văn Sum',team:'t1',rate:400000},
+    {id:'w5',name:'Trần Văn Lượng',team:'t1',rate:400000},
+    {id:'w6',name:'Huỳnh Tân Hòa',team:'t1',rate:400000},
+    {id:'w7',name:'Nguyễn Thanh Phú',team:'t1',rate:400000},
+    {id:'w8',name:'Huỳnh Văn Hải',team:'t1',rate:400000},
+    {id:'w9',name:'Nguyễn Huy Trọng',team:'t1',rate:450000},
+    {id:'w10',name:'Lê Văn Hơn',team:'t1',rate:400000},
+    {id:'w11',name:'Bùi Văn Bình',team:'t1',rate:400000},
+    {id:'w12',name:'Hoàng Vũ',team:'t1',rate:400000},
+    {id:'w13',name:'Trần Văn Thọ',team:'t1',rate:400000},
+    {id:'w14',name:'Nguyễn Thanh Phương',team:'t1',rate:400000},
+    {id:'w15',name:'Nguyễn Trương Phùng',team:'t1',rate:400000},
+    {id:'w16',name:'Nguyễn Văn Hưởng',team:'t1',rate:400000},
+    // Đội Nghĩa
+    {id:'w20',name:'Nguyễn Ngọc Nghĩa',team:'t2',rate:500000},
+    {id:'w21',name:'Trương Thị Hà',team:'t2',rate:380000},
+    {id:'w22',name:'Bùi Văn An',team:'t2',rate:450000},
+    {id:'w23',name:'Nguyễn Văn Thuận',team:'t2',rate:430000},
+    {id:'w24',name:'Nguyễn Ngọc Tá',team:'t2',rate:430000},
+    {id:'w25',name:'Nguyễn Văn Màng',team:'t2',rate:450000},
+    {id:'w26',name:'Nguyễn Tấn Trực',team:'t2',rate:400000},
+    {id:'w27',name:'Phạm Văn Hòa',team:'t2',rate:400000},
+    {id:'w28',name:'Trần Thanh Phương',team:'t2',rate:400000},
+    {id:'w29',name:'Nguyễn Văn Tiếng',team:'t2',rate:400000},
+    {id:'w30',name:'Bùi Văn Khánh',team:'t2',rate:400000},
+    {id:'w31',name:'Nguyễn Văn Thiện',team:'t2',rate:420000},
+    {id:'w32',name:'Lê Văn Duy',team:'t2',rate:400000},
+    // Đội Khoa
+    {id:'w40',name:'Phan Đức Khoa',team:'t3',rate:550000},
+    {id:'w41',name:'Giáp Văn Mười',team:'t3',rate:400000},
+    {id:'w42',name:'Dương Ngọc Danh',team:'t3',rate:400000},
+    {id:'w43',name:'Nguyễn Văn Âu',team:'t3',rate:400000},
+    // BCH
+    {id:'w50',name:'Nguyễn Thị Tuyết Bình',team:'t4',rate:380000},
+    {id:'w51',name:'Nguyễn Văn Tiện',team:'t4',rate:450000},
+    {id:'w52',name:'Trần Quang Dương',team:'t4',rate:450000},
+    {id:'w53',name:'Diễm',team:'t4',rate:350000},
+    {id:'w54',name:'Đoàn Văn Quanh',team:'t4',rate:450000},
+    // Đội Tưởng
+    {id:'w60',name:'Huỳnh Văn Dũng',team:'t5',rate:400000},
+    {id:'w61',name:'Nguyễn Văn An',team:'t5',rate:450000},
+    {id:'w62',name:'Đinh Văn Vinh',team:'t5',rate:450000},
+    // Điện-Nước
+    {id:'w70',name:'Nguyễn Văn Thiện (điện)',team:'t6',rate:400000},
+    {id:'w71',name:'Nguyễn Trương Phùng (dầu)',team:'t6',rate:430000},
+  ],
+  categories:[
+    {id:'c1',name:'Thi công mương',unit:'công',price:450000,group:'Mương'},
+    {id:'c2',name:'Thi công hố thu / hố ga',unit:'công',price:450000,group:'Hố ga'},
+    {id:'c3',name:'Defect hố thu / hố ga',unit:'công',price:450000,group:'Hố ga'},
+    {id:'c4',name:'Nắp BT hố ga',unit:'công',price:450000,group:'Hố ga'},
+    {id:'c5',name:'Thi công cấp phối nền đường',unit:'m²',price:20000,group:'Hạ tầng'},
+    {id:'c6',name:'San gạt taluy thủ công',unit:'m²',price:20000,group:'Hạ tầng'},
+    {id:'c7',name:'Thi công đắp đất đầm chặt',unit:'m²',price:20000,group:'Hạ tầng'},
+    {id:'c8',name:'Lắp bơm bê tông đường',unit:'công',price:400000,group:'Bê tông đường'},
+    {id:'c9',name:'Thi công thép / coffa đường',unit:'công',price:450000,group:'Bê tông đường'},
+    {id:'c10',name:'Chèn khe đường BT',unit:'công',price:400000,group:'Bê tông đường'},
+    {id:'c11',name:'Thi công MSE / rọ đá / vải địa',unit:'công',price:450000,group:'MSE & Rọ đá'},
+    {id:'c12',name:'Thi công Geocell',unit:'m²',price:29120,group:'MSE & Rọ đá'},
+    {id:'c13',name:'Thi công Bio swale (mương cỏ)',unit:'m',price:0,group:'Hạ tầng'},
+    {id:'c14',name:'Dọn vệ sinh / HSE',unit:'công',price:400000,group:'Phụ trợ'},
+    {id:'c15',name:'Phát quang',unit:'m²',price:12000,group:'Phụ trợ'},
+    {id:'c16',name:'Thi công inlet / cống hộp',unit:'công',price:400000,group:'Mương'},
+    {id:'c17',name:'Thi công nắp hố ga BT',unit:'công',price:450000,group:'Hố ga'},
+    {id:'c18',name:'Xử lý xói lở / sự cố mưa',unit:'công',price:450000,group:'Phụ trợ'},
+    {id:'c19',name:'Trực điện nước tạm',unit:'công',price:400000,group:'Điện nước tạm'},
+    {id:'c20',name:'Cấp dầu máy phát',unit:'công',price:430000,group:'Điện nước tạm'},
+    {id:'c21',name:'Dọn dẹp BCH / văn phòng',unit:'công',price:350000,group:'Phụ trợ'},
+    {id:'c22',name:'Thi công hầm chui / kết cấu',unit:'công',price:450000,group:'Hạ tầng'},
+    {id:'c23',name:'Khác (ghi chú)',unit:'công',price:0,group:'Khác'},
+  ]
+};
+
+// ══════════════════════════════════════════════════════
+// FIREBASE – KẾT NỐI
+// ══════════════════════════════════════════════════════
+function setFbStatusUI(state, msg) {
+  const dot = document.getElementById('fb-dot');
+  const txt = document.getElementById('fb-txt');
+  const card = document.getElementById('fb-setup-status');
+  if(!dot) return;
+  if(state==='on'){
+    dot.className='on'; txt.textContent='Online';
+    if(card){card.style.background='#e8f5e9';card.style.color='#2d7d46';card.textContent='🟢 Đã kết nối Firebase – mọi người thấy cùng dữ liệu thời gian thực';}
+  }else if(state==='err'){
+    dot.className='err'; txt.textContent='Lỗi';
+    if(card){card.style.background='#ffebee';card.style.color='#c62828';card.textContent='🔴 Lỗi kết nối: '+msg;}
+  }else{
+    dot.className=''; txt.textContent='Offline';
+    if(card){card.style.background='#f5f5f5';card.style.color='#555';card.textContent='⚫ Chưa kết nối – đang dùng dữ liệu cục bộ trên máy này';}
+  }
+}
+
+async function connectFirebase(){
+  const url = (document.getElementById('fb-url-input').value||'').trim().replace(/\/$/, '');
+  if(!url){ toast('Vui lòng nhập Database URL', true); return; }
+  if(!url.startsWith('https://')){ toast('URL phải bắt đầu bằng https://', true); return; }
+
+  localStorage.setItem('fb_db_url', url);
+  toast('⏳ Đang kết nối...');
+  await _initFirebase(url);
+}
+
+async function _initFirebase(dbUrl){
+  try{
+    // Xóa app cũ nếu có
+    if(firebase.apps.length > 0){
+      await Promise.all(firebase.apps.map(a => a.delete()));
+    }
+    firebase.initializeApp({ databaseURL: dbUrl });
+    fbDb = firebase.database();
+
+    // Test kết nối bằng cách ghi một giá trị nhỏ
+    await fbDb.ref('_ping').set(Date.now());
+
+    setFbStatusUI('on');
+    toast('✅ Kết nối Firebase thành công!');
+
+    // Load dữ liệu từ Firebase
+    await _loadFromFirebase();
+
+    // Lắng nghe thay đổi realtime
+    _setupRealtimeListeners();
+
+    renderDash();
+    renderLogs();
+
+  }catch(e){
+    fbDb = null;
+    setFbStatusUI('err', e.message);
+    // Hướng dẫn lỗi cụ thể
+    if(e.message.includes('PERMISSION_DENIED')){
+      toast('❌ Lỗi quyền truy cập – xem hướng dẫn Rules bên dưới', true);
+      alert('LỖI PERMISSION_DENIED\n\nBạn cần vào Firebase Console → Realtime Database → Rules\nVà đặt:\n{\n  "rules": {\n    ".read": true,\n    ".write": true\n  }\n}\nrồi bấm Publish.');
+    }else{
+      toast('❌ ' + e.message, true);
+    }
+  }
+}
+
+function _setupRealtimeListeners(){
+  if(!fbDb) return;
+  // Lắng nghe DB thay đổi realtime
+  fbDb.ref('db').on('value', snap => {
+    const data = snap.val();
+    if(data && data.teams){
+      DB = data;
+      if(!DB.entries) DB.entries = {};
+      // Cập nhật UI trang đang hiện
+      const active = document.querySelector('.page.show')?.id;
+      if(active==='page-dashboard') renderDash();
+      if(active==='page-report') renderReport();
+      if(active==='page-settings') renderSettings();
+    }
+    setFbStatusUI('on');
+  }, err => setFbStatusUI('err', err.message));
+
+  // Lắng nghe logs realtime
+  fbDb.ref('logs').on('value', snap => {
+    LOGS = snap.val() || {};
+    const active = document.querySelector('.page.show')?.id;
+    if(active==='page-dashboard') renderLogs();
+  });
+
+  // Lắng nghe trạng thái online/offline
+  fbDb.ref('.info/connected').on('value', snap => {
+    if(snap.val()) setFbStatusUI('on');
+    else setFbStatusUI('err', 'Mất kết nối');
+  });
+}
+
+async function _loadFromFirebase(){
+  if(!fbDb) return;
+  const snap = await fbDb.ref('db').once('value');
+  const data = snap.val();
+  if(data && data.teams){
+    DB = data;
+    if(!DB.entries) DB.entries = {};
+  }else{
+    // Lần đầu: đẩy dữ liệu mặc định lên
+    initDefaults();
+    await fbDb.ref('db').set(DB);
+  }
+  const lsnap = await fbDb.ref('logs').once('value');
+  LOGS = lsnap.val() || {};
+}
+
+async function disconnectFirebase(){
+  if(fbDb){
+    fbDb.ref('db').off();
+    fbDb.ref('logs').off();
+    fbDb.ref('.info/connected').off();
+    fbDb = null;
+  }
+  localStorage.removeItem('fb_db_url');
+  setFbStatusUI('off');
+  toast('Đã ngắt Firebase – dùng localStorage');
+}
+
+// ══════════════════════════════════════════════════════
+// STORAGE – saveDB / loadDB
+// ══════════════════════════════════════════════════════
+async function saveDB(){
+  if(fbDb){
+    try{ await fbDb.ref('db').set(DB); }
+    catch(e){ toast('Lỗi lưu Firebase: '+e.message, true); }
+  }else{
+    localStorage.setItem('bch_db', JSON.stringify(DB));
+  }
+}
+
+async function loadDB(){
+  if(fbDb){
+    await _loadFromFirebase();
+  }else{
+    const s = localStorage.getItem('bch_db');
+    if(s){ try{ DB=JSON.parse(s); }catch(e){ initDefaults(); } }
+    else initDefaults();
+    LOGS = JSON.parse(localStorage.getItem('bch_logs')||'{}');
+  }
+}
+
+function initDefaults(){
+  DB.teams=[...DEFAULT.teams];
+  DB.gs=[...DEFAULT.gs];
+  DB.workers=DEFAULT.workers.map(w=>({...w}));
+  DB.categories=DEFAULT.categories.map(c=>({...c}));
+  DB.entries={};
+}
+
+// ══════════════════════════════════════════════════════
+// SUBMIT LOG – Ghi lịch sử nộp báo cáo
+// ══════════════════════════════════════════════════════
+function todayVN(){
+  // Giờ Việt Nam UTC+7
+  const vn = new Date(Date.now() + 7*3600*1000);
+  return vn.toISOString().slice(0,10);
+}
+function nowVN(){
+  const vn = new Date(Date.now() + 7*3600*1000);
+  return vn.toISOString().slice(0,19).replace('T',' ');
+}
+
+async function saveSubmitLog(reportDate, gsId, gsName){
+  const submitDate = todayVN();
+  const isLate = submitDate > reportDate;
+  const daysLate = isLate
+    ? Math.round((new Date(submitDate) - new Date(reportDate)) / 86400000)
+    : 0;
+  const log = { reportDate, submitDate, submittedAt: nowVN(), gsId, gsName, isLate, daysLate };
+  LOGS[reportDate] = log;
+  if(fbDb){
+    await fbDb.ref('logs/'+reportDate).set(log);
+  }else{
+    localStorage.setItem('bch_logs', JSON.stringify(LOGS));
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER LOGS (Dashboard)
+// ══════════════════════════════════════════════════════
+function renderLogs(){
+  const el = document.getElementById('dash-logs');
+  const stats = document.getElementById('late-stats');
+  const all = Object.values(LOGS).sort((a,b)=>b.reportDate.localeCompare(a.reportDate)).slice(0,60);
+  if(all.length===0){
+    el.innerHTML='<div class="empty"><div class="empty-ico">📅</div>Chưa có lịch sử nộp báo cáo.</div>';
+    if(stats) stats.style.display='none';
+    return;
+  }
+  let html='<table><thead><tr><th>Ngày BC</th><th>Nộp lúc</th><th>Giám sát</th><th>Trạng thái</th></tr></thead><tbody>';
+  const late=all.filter(l=>l.isLate), ok=all.filter(l=>!l.isLate);
+  all.forEach(l=>{
+    const badge = l.isLate
+      ? `<span class="badge badge-late">⚠️ Trễ ${l.daysLate} ngày</span>`
+      : `<span class="badge badge-ok">✅ Đúng hạn</span>`;
+    html+=`<tr class="${l.isLate?'late-row':''}"><td>${l.reportDate}</td><td style="font-size:12px">${l.submittedAt||'—'}</td><td>${l.gsName||'—'}</td><td>${badge}</td></tr>`;
+  });
+  html+='</tbody></table>';
+  el.innerHTML=html;
+
+  if(stats){
+    stats.style.display='block';
+    document.getElementById('ls-total').textContent=all.length;
+    document.getElementById('ls-late').textContent=late.length;
+    document.getElementById('ls-ok').textContent=ok.length;
+    // Thống kê GS nộp trễ
+    const gsCount={};
+    late.forEach(l=>{ gsCount[l.gsName]=(gsCount[l.gsName]||0)+1; });
+    const sorted=Object.entries(gsCount).sort((a,b)=>b[1]-a[1]);
+    let ghtml='';
+    if(sorted.length>0){
+      ghtml='<div style="font-size:12px;font-weight:700;color:var(--txt2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Giám sát nộp trễ nhiều nhất</div>';
+      ghtml+='<table><thead><tr><th>Giám sát</th><th class="tbl-num">Số lần trễ</th></tr></thead><tbody>';
+      sorted.forEach(([name,cnt])=>{
+        ghtml+=`<tr><td>${name}</td><td class="tbl-num"><span class="badge badge-late">${cnt} lần</span></td></tr>`;
+      });
+      ghtml+='</tbody></table>';
+    }
+    document.getElementById('late-by-gs').innerHTML=ghtml;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════
+function goPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('show'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('show');
+  document.querySelectorAll('.nav-tab').forEach(t=>{
+    if(t.textContent.toLowerCase().includes({dashboard:'tổng',entry:'nhập',report:'báo',settings:'cài'}[id])) t.classList.add('active');
+  });
+  if(id==='dashboard'){ renderDash(); renderLogs(); }
+  if(id==='entry') renderEntry();
+  if(id==='settings'){ renderSettings(); _loadFbUrlToInput(); }
+  if(id==='report') renderReport();
+  window.scrollTo(0,0);
+}
+
+function _loadFbUrlToInput(){
+  const saved = localStorage.getItem('fb_db_url');
+  if(saved) document.getElementById('fb-url-input').value = saved;
+}
+
+// ══════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════
+function uid(){return 'x'+Math.random().toString(36).slice(2,8)}
+function fmtMoney(n){return (n/1e6).toFixed(2)+'M'}
+function fmtNum(n){return n.toLocaleString('vi')}
+function today(){return new Date().toISOString().slice(0,10)}
+function toast(msg,isErr){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background=isErr?'#c0392b':'var(--navy)';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+function getTeam(tid){return DB.teams.find(t=>t.id===tid)||{name:'?'}}
+function getWorker(wid){return DB.workers.find(w=>w.id===wid)||{name:'?',rate:0}}
+function getGS(gid){return DB.gs.find(g=>g.id===gid)||{name:'?'}}
+function getCat(cid){return DB.categories.find(c=>c.id===cid)||{name:'?',price:0}}
+function calcPay(rate,s,c,tc){
+  const shifts=(parseFloat(s)||0)+(parseFloat(c)||0);
+  const tcPay=rate/8*(parseFloat(tc)||0)*1.5;
+  return shifts*rate+tcPay;
+}
+function calcShifts(s,c){return (parseFloat(s)||0)+(parseFloat(c)||0)}
+
+// ══════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════
+function renderDash(){
+  const from=document.getElementById('dash-from').value;
+  const to=document.getElementById('dash-to').value;
+  if(!from||!to){document.getElementById('dash-period').textContent='Chọn kỳ để xem thống kê';return;}
+  document.getElementById('dash-period').textContent=`Kỳ: ${from} → ${to}`;
+
+  const entries=getEntriesInRange(from,to);
+  const days=new Set(Object.keys(DB.entries).filter(d=>d>=from&&d<=to&&DB.entries[d].length>0)).size;
+
+  let totalShifts=0,totalMoney=0,workerMap={},teamMap={};
+  entries.forEach(({wid,s,c,tc})=>{
+    const w=getWorker(wid);
+    const shifts=calcShifts(s,c);
+    const pay=calcPay(w.rate,s,c,tc);
+    totalShifts+=shifts; totalMoney+=pay;
+    if(!workerMap[wid]) workerMap[wid]={shifts:0,pay:0,tc:0};
+    workerMap[wid].shifts+=shifts; workerMap[wid].pay+=pay;
+    workerMap[wid].tc+=(parseFloat(tc)||0);
+    const tid=w.team;
+    if(!teamMap[tid]) teamMap[tid]={shifts:0,pay:0,cnt:0};
+    teamMap[tid].shifts+=shifts; teamMap[tid].pay+=pay; teamMap[tid].cnt++;
+  });
+
+  document.getElementById('ds-days').textContent=days;
+  document.getElementById('ds-workers').textContent=entries.length;
+  document.getElementById('ds-shifts').textContent=totalShifts.toFixed(1);
+  document.getElementById('ds-money').textContent=fmtMoney(totalMoney);
+
+  // Top workers
+  const topW=Object.entries(workerMap).sort((a,b)=>b[1].shifts-a[1].shifts).slice(0,10);
+  if(topW.length===0){
+    document.getElementById('dash-top').innerHTML='<div class="empty"><div class="empty-ico">📋</div>Chưa có dữ liệu.</div>';
+  }else{
+    let html='<table><thead><tr><th>#</th><th>Công nhân</th><th>Đội</th><th class="tbl-num">Tổng công</th><th class="tbl-num">TC (h)</th><th class="tbl-num">Lương (đ)</th></tr></thead><tbody>';
+    topW.forEach(([wid,v],i)=>{
+      const w=getWorker(wid);
+      html+=`<tr><td>${i+1}</td><td>${w.name}</td><td><span class="team-tag">${getTeam(w.team).name}</span></td><td class="tbl-num">${v.shifts.toFixed(1)}</td><td class="tbl-num">${v.tc.toFixed(1)}</td><td class="tbl-num">${fmtNum(Math.round(v.pay))}</td></tr>`;
+    });
+    html+='</tbody></table>';
+    document.getElementById('dash-top').innerHTML=html;
+  }
+
+  // Teams
+  const topT=Object.entries(teamMap).sort((a,b)=>b[1].shifts-a[1].shifts);
+  if(topT.length===0){
+    document.getElementById('dash-teams').innerHTML='<div class="empty"><div class="empty-ico">👥</div>Chưa có dữ liệu.</div>';
+  }else{
+    let html='<table><thead><tr><th>Đội</th><th class="tbl-num">Tổng công</th><th class="tbl-num">Lương (đ)</th></tr></thead><tbody>';
+    topT.forEach(([tid,v])=>{
+      html+=`<tr><td>${getTeam(tid).name}</td><td class="tbl-num">${v.shifts.toFixed(1)}</td><td class="tbl-num">${fmtNum(Math.round(v.pay))}</td></tr>`;
+    });
+    html+='</tbody></table>';
+    document.getElementById('dash-teams').innerHTML=html;
+  }
+
+  renderLogs();
+}
+
+function getEntriesInRange(from,to){
+  let result=[];
+  Object.keys(DB.entries).forEach(d=>{
+    if(d>=from&&d<=to) result=result.concat((DB.entries[d]||[]).map(e=>({...e,date:d})));
+  });
+  return result;
+}
+
+// ══════════════════════════════════════════════════════
+// ENTRY
+// ══════════════════════════════════════════════════════
+function checkLateWarn(){
+  const reportDate = document.getElementById('e-date').value;
+  const t = todayVN();
+  const el = document.getElementById('late-warn');
+  if(reportDate && reportDate < t){
+    document.getElementById('lw-today').textContent = t;
+    document.getElementById('lw-date').textContent = reportDate;
+    el.style.display='block';
+  }else{
+    el.style.display='none';
+  }
+}
+
+function renderEntry(){
+  const d=document.getElementById('e-date');
+  if(!d.value) d.value=today();
+  checkLateWarn();
+
+  // Populate GS
+  const gs=document.getElementById('e-gs');
+  gs.innerHTML=DB.gs.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+
+  // Team filter
+  const tf=document.getElementById('e-team-filter');
+  tf.innerHTML='<option value="">-- Tất cả đội --</option>'+
+    DB.teams.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+
+  renderEntryWorkers();
+}
+
+function renderEntryWorkers(){
+  const date=document.getElementById('e-date').value||today();
+  const teamFilter=document.getElementById('e-team-filter').value;
+  const existing=DB.entries[date]||[];
+
+  let workers=DB.workers;
+  if(teamFilter) workers=workers.filter(w=>w.team===teamFilter);
+
+  const catOpts=DB.categories.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+
+  let html='';
+  workers.forEach(w=>{
+    const ex=existing.find(e=>e.wid===w.id)||{s:0,c:0,tc:0,cat:DB.categories[0]?.id||'',note:''};
+    const team=getTeam(w.team);
+    html+=`<div class="worker-row" id="wr-${w.id}" style="grid-template-columns:1fr">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
+        <div><div class="wr-name">${w.name}</div><div class="wr-doi">${team.name} · ${fmtNum(w.rate)}đ/công</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <div>
+            <div style="font-size:10px;color:var(--txt2);margin-bottom:3px">SÁNG</div>
+            <div class="shift-group">
+              ${[0,0.5,1].map(v=>`<button class="shift-btn ${parseFloat(ex.s)===v?'active-s':''}" onclick="setShift('${w.id}','s',${v})">${v}</button>`).join('')}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--txt2);margin-bottom:3px">CHIỀU</div>
+            <div class="shift-group">
+              ${[0,0.5,1].map(v=>`<button class="shift-btn ${parseFloat(ex.c)===v?'active-c':''}" onclick="setShift('${w.id}','c',${v})">${v}</button>`).join('')}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--txt2);margin-bottom:3px">TC(h)</div>
+            <input class="tc-input" type="number" min="0" max="8" step="0.5" value="${ex.tc}" id="tc-${w.id}" onchange="updateShift('${w.id}')">
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <select style="flex:1;font-size:12px;padding:5px 8px" id="cat-${w.id}" onchange="updateShift('${w.id}')">
+          <option value="">-- Hạng mục --</option>${catOpts}
+        </select>
+        <input style="flex:1;font-size:12px;padding:5px 8px" type="text" placeholder="Ghi chú..." id="note-${w.id}" value="${ex.note||''}" onchange="updateShift('${w.id}')">
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('entry-workers').innerHTML=html||'<div class="empty"><div class="empty-ico">👷</div>Không có công nhân nào.</div>';
+
+  // Set category selects
+  workers.forEach(w=>{
+    const ex=existing.find(e=>e.wid===w.id);
+    const sel=document.getElementById('cat-'+w.id);
+    if(sel&&ex&&ex.cat) sel.value=ex.cat;
+  });
+}
+
+let entryData={};
+
+function setShift(wid,type,val){
+  if(!entryData[wid]) entryData[wid]={s:0,c:0,tc:0,cat:'',note:''};
+  entryData[wid][type]=val;
+  const row=document.getElementById('wr-'+wid);
+  row.querySelectorAll('.shift-btn').forEach(btn=>{
+    const btnVal=parseFloat(btn.textContent);
+    if(btn.onclick.toString().includes(`,'${type}'`)){
+      btn.classList.remove('active-s','active-c','active-tc');
+      if(btnVal===val) btn.classList.add(type==='s'?'active-s':type==='c'?'active-c':'active-tc');
+    }
+  });
+  updateShift(wid);
+}
+
+function updateShift(wid){
+  if(!entryData[wid]) entryData[wid]={s:0,c:0,tc:0,cat:'',note:''};
+  const tc=document.getElementById('tc-'+wid);
+  const cat=document.getElementById('cat-'+wid);
+  const note=document.getElementById('note-'+wid);
+  if(tc) entryData[wid].tc=parseFloat(tc.value)||0;
+  if(cat) entryData[wid].cat=cat.value;
+  if(note) entryData[wid].note=note.value;
+}
+
+async function saveEntry(){
+  const date=document.getElementById('e-date').value||today();
+  const gsId=document.getElementById('e-gs').value;
+  const gsName = getGS(gsId).name;
+
+  const workers=DB.workers.filter(w=>{
+    const tf=document.getElementById('e-team-filter').value;
+    return !tf||w.team===tf;
+  });
+
+  let savedCount=0;
+  if(!DB.entries[date]) DB.entries[date]=[];
+  const existing=DB.entries[date];
+
+  workers.forEach(w=>{
+    const row=document.getElementById('wr-'+w.id);
+    if(!row) return;
+    let s=0,c=0;
+    row.querySelectorAll('.shift-btn').forEach(btn=>{
+      if(btn.classList.contains('active-s')) s=parseFloat(btn.textContent);
+      if(btn.classList.contains('active-c')) c=parseFloat(btn.textContent);
+    });
+    const tc=parseFloat(document.getElementById('tc-'+w.id)?.value)||0;
+    const cat=document.getElementById('cat-'+w.id)?.value||'';
+    const note=document.getElementById('note-'+w.id)?.value||'';
+
+    const idx=existing.findIndex(e=>e.wid===w.id);
+    const rec={wid:w.id,gs:gsId,s,c,tc,cat,note};
+    if(idx>=0) existing[idx]=rec; else existing.push(rec);
+    if(s>0||c>0||tc>0) savedCount++;
+  });
+
+  await saveDB();
+  // ★ Ghi log nộp báo cáo
+  await saveSubmitLog(date, gsId, gsName);
+
+  const isLate = todayVN() > date;
+  const lateMsg = isLate ? ` ⚠️ Nộp trễ ${Math.round((new Date(todayVN())-new Date(date))/86400000)} ngày` : '';
+  toast(`✅ Đã lưu ngày ${date} – ${savedCount} CN có công${lateMsg}`);
+}
+
+async function loadPrevEntry(){
+  const date=document.getElementById('e-date').value||today();
+  const d=new Date(date); d.setDate(d.getDate()-1);
+  const prev=d.toISOString().slice(0,10);
+  const prevData=DB.entries[prev];
+  if(!prevData||prevData.length===0){toast('Không có dữ liệu ngày hôm trước',true);return;}
+  if(!DB.entries[date]) DB.entries[date]=[];
+  prevData.forEach(e=>{
+    const exists=DB.entries[date].find(x=>x.wid===e.wid);
+    if(!exists) DB.entries[date].push({...e});
+  });
+  renderEntryWorkers();
+  toast('Đã nạp dữ liệu từ ngày '+prev);
+}
+
+// ══════════════════════════════════════════════════════
+// REPORT
+// ══════════════════════════════════════════════════════
+function setRTab(tab){
+  rTab=tab;
+  document.querySelectorAll('.report-tab').forEach(el=>el.style.display='none');
+  document.getElementById('report-'+tab).style.display='block';
+  ['worker','team','cat','daily'].forEach(t=>{
+    const btn=document.getElementById('rtab-'+t);
+    if(btn) btn.className=t===tab?'btn btn-primary':'btn btn-sec';
+  });
+}
+
+function setRangeCurrent(){
+  const now=new Date();const d=now.getDate();const y=now.getFullYear(),m=now.getMonth();
+  const pad=n=>String(n).padStart(2,'0');let from,to;
+  if(d<=15){from=`${y}-${pad(m+1)}-01`;to=`${y}-${pad(m+1)}-15`;}
+  else{from=`${y}-${pad(m+1)}-16`;const last=new Date(y,m+1,0).getDate();to=`${y}-${pad(m+1)}-${pad(last)}`;}
+  document.getElementById('r-from').value=from;document.getElementById('r-to').value=to;renderReport();
+}
+function setRangeMonth(){
+  const now=new Date();const y=now.getFullYear(),m=now.getMonth();const pad=n=>String(n).padStart(2,'0');
+  document.getElementById('r-from').value=`${y}-${pad(m+1)}-01`;
+  const last=new Date(y,m+1,0).getDate();document.getElementById('r-to').value=`${y}-${pad(m+1)}-${pad(last)}`;renderReport();
+}
+function setRangePrev(){
+  const now=new Date();const d=now.getDate();const y=now.getFullYear(),m=now.getMonth();
+  const pad=n=>String(n).padStart(2,'0');let from,to;
+  if(d<=15){const pm=m===0?11:m-1;const py=m===0?y-1:y;const last=new Date(py,pm+1,0).getDate();from=`${py}-${pad(pm+1)}-16`;to=`${py}-${pad(pm+1)}-${pad(last)}`;}
+  else{from=`${y}-${pad(m+1)}-01`;to=`${y}-${pad(m+1)}-15`;}
+  document.getElementById('r-from').value=from;document.getElementById('r-to').value=to;renderReport();
+}
+
+function renderReport(){
+  const from=document.getElementById('r-from').value;
+  const to=document.getElementById('r-to').value;
+  if(!from||!to){toast('Chọn khoảng thời gian',true);return;}
+
+  const entries=getEntriesInRange(from,to);
+
+  // By worker
+  let workerMap={};
+  entries.forEach(e=>{
+    if(!workerMap[e.wid]) workerMap[e.wid]={shifts:0,pay:0,tc:0,cats:{}};
+    const w=getWorker(e.wid);
+    const shifts=calcShifts(e.s,e.c);
+    const pay=calcPay(w.rate,e.s,e.c,e.tc);
+    workerMap[e.wid].shifts+=shifts; workerMap[e.wid].pay+=pay;
+    workerMap[e.wid].tc+=(parseFloat(e.tc)||0);
+    if(e.cat) workerMap[e.wid].cats[e.cat]=(workerMap[e.wid].cats[e.cat]||0)+shifts;
+  });
+  let wHtml='';
+  const wEntries=Object.entries(workerMap).sort((a,b)=>b[1].shifts-a[1].shifts);
+  if(wEntries.length===0){wHtml='<div class="empty"><div class="empty-ico">📋</div>Không có dữ liệu.</div>';}
+  else{
+    wHtml='<div class="tbl-wrap"><table><thead><tr><th>Công nhân</th><th>Đội</th><th class="tbl-num">Sáng+Chiều</th><th class="tbl-num">TC(h)</th><th class="tbl-num">Lương (đồng)</th></tr></thead><tbody>';
+    wEntries.forEach(([wid,v])=>{
+      const w=getWorker(wid);
+      wHtml+=`<tr><td>${w.name}</td><td><span class="team-tag">${getTeam(w.team).name}</span></td><td class="tbl-num">${v.shifts.toFixed(1)}</td><td class="tbl-num">${v.tc.toFixed(1)}</td><td class="tbl-num" style="font-weight:700">${fmtNum(Math.round(v.pay))}</td></tr>`;
+    });
+    const totalPay=wEntries.reduce((s,[,v])=>s+v.pay,0);
+    const totalShifts=wEntries.reduce((s,[,v])=>s+v.shifts,0);
+    wHtml+=`<tr style="background:var(--navy);color:#fff"><td colspan="2"><b>TỔNG CỘNG</b></td><td class="tbl-num"><b>${totalShifts.toFixed(1)}</b></td><td></td><td class="tbl-num"><b>${fmtNum(Math.round(totalPay))}</b></td></tr>`;
+    wHtml+='</tbody></table></div>';
+  }
+  document.getElementById('report-worker').innerHTML=wHtml;
+
+  // By team
+  let teamMap={};
+  entries.forEach(e=>{
+    const w=getWorker(e.wid);const tid=w.team;
+    if(!teamMap[tid]) teamMap[tid]={shifts:0,pay:0,tc:0};
+    teamMap[tid].shifts+=calcShifts(e.s,e.c);
+    teamMap[tid].pay+=calcPay(w.rate,e.s,e.c,e.tc);
+    teamMap[tid].tc+=(parseFloat(e.tc)||0);
+  });
+  let tHtml='';
+  const tEntries=Object.entries(teamMap).sort((a,b)=>b[1].shifts-a[1].shifts);
+  if(tEntries.length===0){tHtml='<div class="empty"><div class="empty-ico">👥</div>Không có dữ liệu.</div>';}
+  else{
+    tHtml='<div class="tbl-wrap"><table><thead><tr><th>Đội</th><th class="tbl-num">Tổng công</th><th class="tbl-num">Tăng ca(h)</th><th class="tbl-num">Lương (đồng)</th></tr></thead><tbody>';
+    tEntries.forEach(([tid,v])=>{
+      tHtml+=`<tr><td>${getTeam(tid).name}</td><td class="tbl-num">${v.shifts.toFixed(1)}</td><td class="tbl-num">${v.tc.toFixed(1)}</td><td class="tbl-num"><b>${fmtNum(Math.round(v.pay))}</b></td></tr>`;
+    });
+    tHtml+='</tbody></table></div>';
+  }
+  document.getElementById('report-team').innerHTML=tHtml;
+
+  // By category
+  let catMap={};
+  entries.forEach(e=>{
+    if(!e.cat) return;
+    if(!catMap[e.cat]) catMap[e.cat]={shifts:0,pay:0};
+    const shifts=calcShifts(e.s,e.c);
+    catMap[e.cat].shifts+=shifts;
+    catMap[e.cat].pay+=shifts*getCat(e.cat).price;
+  });
+  let cHtml='';
+  const cEntries=Object.entries(catMap).sort((a,b)=>b[1].shifts-a[1].shifts);
+  if(cEntries.length===0){cHtml='<div class="empty"><div class="empty-ico">🏗️</div>Không có dữ liệu.</div>';}
+  else{
+    cHtml='<div class="tbl-wrap"><table><thead><tr><th>Hạng mục</th><th>Nhóm</th><th class="tbl-num">Tổng công</th><th class="tbl-num">Đơn giá</th><th class="tbl-num">Thành tiền (đ)</th></tr></thead><tbody>';
+    cEntries.forEach(([cid,v])=>{
+      const cat=getCat(cid);
+      cHtml+=`<tr><td>${cat.name}</td><td><span class="badge badge-gray">${cat.group||'—'}</span></td><td class="tbl-num">${v.shifts.toFixed(1)}</td><td class="tbl-num">${fmtNum(cat.price)}</td><td class="tbl-num"><b>${fmtNum(Math.round(v.pay))}</b></td></tr>`;
+    });
+    cHtml+='</tbody></table></div>';
+  }
+  document.getElementById('report-cat').innerHTML=cHtml;
+
+  // By daily
+  const dates=Object.keys(DB.entries).filter(d=>d>=from&&d<=to).sort();
+  let dHtml='';
+  if(dates.length===0){dHtml='<div class="empty"><div class="empty-ico">📅</div>Không có dữ liệu.</div>';}
+  else{
+    dHtml='<div class="tbl-wrap"><table><thead><tr><th>Ngày</th><th class="tbl-num">Số CN</th><th class="tbl-num">Tổng công</th><th class="tbl-num">Lương (đ)</th><th>Nộp lúc</th><th>GS / Trạng thái</th></tr></thead><tbody>';
+    dates.forEach(d=>{
+      const dayE=DB.entries[d]||[];
+      let shifts=0,pay=0;
+      dayE.forEach(e=>{const w=getWorker(e.wid);shifts+=calcShifts(e.s,e.c);pay+=calcPay(w.rate,e.s,e.c,e.tc);});
+      const log=LOGS[d];
+      const badge=log?(log.isLate?`<span class="badge badge-late">Trễ ${log.daysLate}d</span>`:`<span class="badge badge-ok">✅</span>`):'';
+      dHtml+=`<tr><td>${d}</td><td class="tbl-num">${dayE.length}</td><td class="tbl-num">${shifts.toFixed(1)}</td><td class="tbl-num">${fmtNum(Math.round(pay))}</td><td style="font-size:11px">${log?log.submittedAt:'—'}</td><td>${log?log.gsName:'—'} ${badge}</td></tr>`;
+    });
+    dHtml+='</tbody></table></div>';
+  }
+  document.getElementById('report-daily').innerHTML=dHtml;
+
+  setRTab(rTab);
+  toast('Đã cập nhật báo cáo');
+}
+
+// ══════════════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════════════
+function renderSettings(){
+  let th='';
+  DB.teams.forEach((t,i)=>{
+    th+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div><b>${t.name}</b> <span style="font-size:12px;color:var(--txt2)">${t.leader}</span></div>
+      <div style="display:flex;gap:5px">
+        <button class="btn btn-sec btn-sm" onclick="openModal('team',${i})">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteItem('team',${i})">✕</button>
+      </div></div>`;
+  });
+  document.getElementById('s-teams').innerHTML=th||'<div class="empty">Chưa có đội nào</div>';
+
+  let gh='';
+  DB.gs.forEach((g,i)=>{
+    gh+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div>${g.name}</div>
+      <div style="display:flex;gap:5px">
+        <button class="btn btn-sec btn-sm" onclick="openModal('gs',${i})">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteItem('gs',${i})">✕</button>
+      </div></div>`;
+  });
+  document.getElementById('s-gs').innerHTML=gh||'<div class="empty">Chưa có GS nào</div>';
+
+  const swt=document.getElementById('s-w-team');
+  swt.innerHTML='<option value="">Tất cả đội</option>'+DB.teams.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+
+  renderSettingsWorkers();
+  renderSettingsCats();
+}
+
+function renderSettingsWorkers(){
+  const q=(document.getElementById('s-w-search')?.value||'').toLowerCase();
+  const tf=document.getElementById('s-w-team')?.value||'';
+  let workers=DB.workers;
+  if(tf) workers=workers.filter(w=>w.team===tf);
+  if(q) workers=workers.filter(w=>w.name.toLowerCase().includes(q));
+  if(workers.length===0){document.getElementById('s-workers').innerHTML='<div class="empty">Không tìm thấy</div>';return;}
+  let html='<table><thead><tr><th>#</th><th>Họ tên</th><th>Đội</th><th class="tbl-num">Lương/công</th><th></th></tr></thead><tbody>';
+  workers.forEach((w,i)=>{
+    const realIdx=DB.workers.indexOf(w);
+    html+=`<tr><td>${i+1}</td><td>${w.name}</td><td><span class="team-tag">${getTeam(w.team).name}</span></td><td class="tbl-num">${fmtNum(w.rate)}</td>
+    <td><div style="display:flex;gap:4px">
+      <button class="btn btn-sec btn-sm" onclick="openModal('worker',${realIdx})">✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteItem('worker',${realIdx})">✕</button>
+    </div></td></tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById('s-workers').innerHTML=html;
+}
+
+function renderSettingsCats(){
+  if(DB.categories.length===0){document.getElementById('s-cats').innerHTML='<div class="empty">Chưa có hạng mục</div>';return;}
+  let html='<table><thead><tr><th>Tên hạng mục</th><th>ĐVT</th><th>Nhóm</th><th class="tbl-num">Đơn giá (đ)</th><th></th></tr></thead><tbody>';
+  DB.categories.forEach((c,i)=>{
+    html+=`<tr><td>${c.name}</td><td>${c.unit}</td><td><span class="badge badge-gray">${c.group||'—'}</span></td><td class="tbl-num">${fmtNum(c.price)}</td>
+    <td><div style="display:flex;gap:4px">
+      <button class="btn btn-sec btn-sm" onclick="openModal('cat',${i})">✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteItem('cat',${i})">✕</button>
+    </div></td></tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById('s-cats').innerHTML=html;
+}
+
+// ══════════════════════════════════════════════════════
+// MODAL
+// ══════════════════════════════════════════════════════
+function openModal(type,idx=-1){
+  modalType=type;modalIdx=idx;
+  const bg=document.getElementById('modal-bg');
+  bg.classList.add('show');
+  const titles={team:'Đội',gs:'Giám sát',worker:'Công nhân',cat:'Hạng mục'};
+  document.getElementById('modal-title').textContent=(idx>=0?'Sửa ':'Thêm ')+titles[type];
+  let body='';
+  if(type==='team'){
+    const d=idx>=0?DB.teams[idx]:{name:'',leader:''};
+    body=`<div class="form-row"><label>Tên đội</label><input id="m-name" value="${d.name}"></div>
+    <div class="form-row"><label>Đội trưởng</label><input id="m-leader" value="${d.leader}"></div>`;
+  }else if(type==='gs'){
+    const d=idx>=0?DB.gs[idx]:{name:''};
+    body=`<div class="form-row"><label>Tên giám sát</label><input id="m-name" value="${d.name}"></div>`;
+  }else if(type==='worker'){
+    const d=idx>=0?DB.workers[idx]:{name:'',team:DB.teams[0]?.id||'',rate:400000};
+    body=`<div class="form-row"><label>Họ tên</label><input id="m-name" value="${d.name}"></div>
+    <div class="form-row"><label>Đội</label><select id="m-team">${DB.teams.map(t=>`<option value="${t.id}"${t.id===d.team?' selected':''}>${t.name}</option>`).join('')}</select></div>
+    <div class="form-row"><label>Lương/công (đồng)</label><input id="m-rate" type="number" value="${d.rate}"></div>`;
+  }else if(type==='cat'){
+    const d=idx>=0?DB.categories[idx]:{name:'',unit:'công',price:0,group:''};
+    body=`<div class="form-row"><label>Tên hạng mục</label><input id="m-name" value="${d.name}"></div>
+    <div class="form-2">
+      <div class="form-row" style="margin:0"><label>ĐVT</label><input id="m-unit" value="${d.unit}"></div>
+      <div class="form-row" style="margin:0"><label>Đơn giá (đ)</label><input id="m-price" type="number" value="${d.price}"></div>
+    </div>
+    <div class="form-row" style="margin-top:12px"><label>Nhóm</label><input id="m-group" value="${d.group}" placeholder="VD: Mương, Hố ga, Hạ tầng..."></div>`;
+  }
+  document.getElementById('modal-body').innerHTML=body;
+  setTimeout(()=>document.querySelector('#modal-box input')?.focus(),100);
+}
+
+function closeModal(){document.getElementById('modal-bg').classList.remove('show');}
+
+async function modalSave(){
+  const type=modalType,idx=modalIdx;
+  if(type==='team'){
+    const name=document.getElementById('m-name').value.trim();
+    const leader=document.getElementById('m-leader').value.trim();
+    if(!name){toast('Nhập tên đội',true);return;}
+    if(idx>=0) DB.teams[idx]={...DB.teams[idx],name,leader};
+    else DB.teams.push({id:uid(),name,leader});
+  }else if(type==='gs'){
+    const name=document.getElementById('m-name').value.trim();
+    if(!name){toast('Nhập tên GS',true);return;}
+    if(idx>=0) DB.gs[idx]={...DB.gs[idx],name};
+    else DB.gs.push({id:uid(),name});
+  }else if(type==='worker'){
+    const name=document.getElementById('m-name').value.trim();
+    const team=document.getElementById('m-team').value;
+    const rate=parseInt(document.getElementById('m-rate').value)||400000;
+    if(!name){toast('Nhập tên công nhân',true);return;}
+    if(idx>=0) DB.workers[idx]={...DB.workers[idx],name,team,rate};
+    else DB.workers.push({id:uid(),name,team,rate});
+  }else if(type==='cat'){
+    const name=document.getElementById('m-name').value.trim();
+    const unit=document.getElementById('m-unit').value.trim()||'công';
+    const price=parseInt(document.getElementById('m-price').value)||0;
+    const group=document.getElementById('m-group').value.trim();
+    if(!name){toast('Nhập tên hạng mục',true);return;}
+    if(idx>=0) DB.categories[idx]={...DB.categories[idx],name,unit,price,group};
+    else DB.categories.push({id:uid(),name,unit,price,group});
+  }
+  await saveDB();
+  closeModal();
+  renderSettings();
+  toast('Đã lưu');
+}
+
+async function deleteItem(type,idx){
+  const label={team:'đội',gs:'giám sát',worker:'công nhân',cat:'hạng mục'}[type];
+  if(!confirm(`Xóa ${label} này?`)) return;
+  if(type==='team') DB.teams.splice(idx,1);
+  else if(type==='gs') DB.gs.splice(idx,1);
+  else if(type==='worker') DB.workers.splice(idx,1);
+  else if(type==='cat') DB.categories.splice(idx,1);
+  await saveDB();
+  renderSettings();
+  toast('Đã xóa');
+}
+
+// ══════════════════════════════════════════════════════
+// DATA EXPORT / IMPORT
+// ══════════════════════════════════════════════════════
+function exportData(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='bch_data_'+today()+'.json';
+  a.click();
+  toast('Đã xuất dữ liệu');
+}
+
+function importData(input){
+  const file=input.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=async(e)=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.teams||!data.workers) throw new Error('File không hợp lệ');
+      Object.assign(DB,data);
+      await saveDB();
+      renderSettings();
+      toast('Nhập dữ liệu thành công');
+    }catch(err){toast('File JSON không hợp lệ',true);}
+  };
+  reader.readAsText(file);
+  input.value='';
+}
+
+async function clearAll(){
+  if(!confirm('XÓA TOÀN BỘ báo cáo công nhật? Cấu hình sẽ giữ nguyên. Không thể hoàn tác!')) return;
+  DB.entries={};
+  await saveDB();
+  toast('Đã xóa toàn bộ báo cáo');
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+async function init(){
+  // Nạp dữ liệu local trước để hiện ngay
+  const s=localStorage.getItem('bch_db');
+  if(s){ try{ DB=JSON.parse(s); }catch(e){ initDefaults(); } }
+  else initDefaults();
+  LOGS=JSON.parse(localStorage.getItem('bch_logs')||'{}');
+
+  // Set default date range
+  const now=new Date();
+  const d=now.getDate();
+  const y=now.getFullYear(),m=now.getMonth();
+  const pad=n=>String(n).padStart(2,'0');
+  let from,to;
+  if(d<=15){from=`${y}-${pad(m+1)}-01`;to=`${y}-${pad(m+1)}-15`;}
+  else{from=`${y}-${pad(m+1)}-16`;const last=new Date(y,m+1,0).getDate();to=`${y}-${pad(m+1)}-${pad(last)}`;}
+  document.getElementById('dash-from').value=from;
+  document.getElementById('dash-to').value=to;
+  document.getElementById('r-from').value=from;
+  document.getElementById('r-to').value=to;
+  document.getElementById('e-date').value=today();
+  renderDash();
+  renderLogs();
+
+  // Tự động kết nối Firebase nếu đã lưu URL
+  const savedUrl=localStorage.getItem('fb_db_url');
+  if(savedUrl){
+    document.getElementById('fb-url-input').value=savedUrl;
+    await _initFirebase(savedUrl);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// EXCEL EXPORT
+// ══════════════════════════════════════════════════════
+function _getReportRange(){
+  return {
+    from: document.getElementById('r-from').value,
+    to:   document.getElementById('r-to').value
+  };
+}
+
+function _sheetWorker(from, to){
+  const entries = getEntriesInRange(from, to);
+  let map = {};
+  entries.forEach(e=>{
+    if(!map[e.wid]) map[e.wid]={shifts:0,pay:0,tc:0};
+    const w=getWorker(e.wid);
+    map[e.wid].shifts += calcShifts(e.s,e.c);
+    map[e.wid].pay   += calcPay(w.rate,e.s,e.c,e.tc);
+    map[e.wid].tc    += parseFloat(e.tc)||0;
+  });
+  const rows = [['STT','Công nhân','Đội','Sáng+Chiều','Tăng ca (h)','Lương (đồng)']];
+  Object.entries(map).sort((a,b)=>b[1].shifts-a[1].shifts).forEach(([wid,v],i)=>{
+    const w=getWorker(wid);
+    rows.push([i+1, w.name, getTeam(w.team).name, +v.shifts.toFixed(1), +v.tc.toFixed(1), Math.round(v.pay)]);
+  });
+  const total = Object.values(map).reduce((s,v)=>({shifts:s.shifts+v.shifts,pay:s.pay+v.pay}),{shifts:0,pay:0});
+  rows.push(['','TỔNG CỘNG','', +total.shifts.toFixed(1), '', Math.round(total.pay)]);
+  return rows;
+}
+
+function _sheetTeam(from, to){
+  const entries = getEntriesInRange(from, to);
+  let map = {};
+  entries.forEach(e=>{
+    const w=getWorker(e.wid); const tid=w.team;
+    if(!map[tid]) map[tid]={shifts:0,pay:0,tc:0};
+    map[tid].shifts += calcShifts(e.s,e.c);
+    map[tid].pay   += calcPay(w.rate,e.s,e.c,e.tc);
+    map[tid].tc    += parseFloat(e.tc)||0;
+  });
+  const rows = [['STT','Đội','Tổng công','Tăng ca (h)','Lương (đồng)']];
+  Object.entries(map).sort((a,b)=>b[1].shifts-a[1].shifts).forEach(([tid,v],i)=>{
+    rows.push([i+1, getTeam(tid).name, +v.shifts.toFixed(1), +v.tc.toFixed(1), Math.round(v.pay)]);
+  });
+  return rows;
+}
+
+function _sheetCat(from, to){
+  const entries = getEntriesInRange(from, to);
+  let map = {};
+  entries.forEach(e=>{
+    if(!e.cat) return;
+    if(!map[e.cat]) map[e.cat]={shifts:0,pay:0};
+    const s=calcShifts(e.s,e.c);
+    map[e.cat].shifts += s;
+    map[e.cat].pay   += s * getCat(e.cat).price;
+  });
+  const rows = [['STT','Hạng mục','Nhóm','ĐVT','Đơn giá','Tổng công','Thành tiền (đ)']];
+  Object.entries(map).sort((a,b)=>b[1].shifts-a[1].shifts).forEach(([cid,v],i)=>{
+    const c=getCat(cid);
+    rows.push([i+1, c.name, c.group||'', c.unit, c.price, +v.shifts.toFixed(1), Math.round(v.pay)]);
+  });
+  return rows;
+}
+
+function _sheetDaily(from, to){
+  const rows = [['Ngày','Số CN','Tổng công','Lương (đ)','Nộp lúc','Giám sát','Trạng thái']];
+  const dates = Object.keys(DB.entries).filter(d=>d>=from&&d<=to).sort();
+  dates.forEach(d=>{
+    const dayE=DB.entries[d]||[];
+    let shifts=0,pay=0;
+    dayE.forEach(e=>{const w=getWorker(e.wid);shifts+=calcShifts(e.s,e.c);pay+=calcPay(w.rate,e.s,e.c,e.tc);});
+    const log=LOGS[d];
+    rows.push([
+      d, dayE.length, +shifts.toFixed(1), Math.round(pay),
+      log?log.submittedAt:'', log?log.gsName:'',
+      log?(log.isLate?`Trễ ${log.daysLate} ngày`:'Đúng hạn'):''
+    ]);
+  });
+  return rows;
+}
+
+function _applyHeaderStyle(ws, headerRow){
+  // Bold + bg cho header row
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for(let c=range.s.c; c<=range.e.c; c++){
+    const cell = ws[XLSX.utils.encode_cell({r:headerRow, c})];
+    if(cell) cell.s = {font:{bold:true}, fill:{fgColor:{rgb:'1A2744'}}, font:{bold:true,color:{rgb:'FFFFFF'}}};
+  }
+}
+
+function _makeSheet(rows){
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  // Auto column width
+  const cols = rows[0].map((_,ci)=>({
+    wch: Math.max(...rows.map(r=>String(r[ci]||'').length), 8)
+  }));
+  ws['!cols'] = cols;
+  return ws;
+}
+
+function exportExcel(){
+  const {from,to} = _getReportRange();
+  if(!from||!to){toast('Chọn khoảng thời gian trước',true);return;}
+  const wb = XLSX.utils.book_new();
+  const label = `${from}_${to}`;
+
+  if(rTab==='worker'){
+    XLSX.utils.book_append_sheet(wb, _makeSheet(_sheetWorker(from,to)), 'Theo công nhân');
+  }else if(rTab==='team'){
+    XLSX.utils.book_append_sheet(wb, _makeSheet(_sheetTeam(from,to)), 'Theo đội');
+  }else if(rTab==='cat'){
+    XLSX.utils.book_append_sheet(wb, _makeSheet(_sheetCat(from,to)), 'Theo hạng mục');
+  }else if(rTab==='daily'){
+    XLSX.utils.book_append_sheet(wb, _makeSheet(_sheetDaily(from,to)), 'Theo ngày');
+  }
+  XLSX.writeFile(wb, `BCH_BaoCao_${rTab}_${label}.xlsx`);
+  toast('✅ Đã xuất Excel');
+}
+
+function exportAllExcel(){
+  const {from,to} = _getReportRange();
+  if(!from||!to){toast('Chọn khoảng thời gian trước',true);return;}
+  const wb = XLSX.utils.book_new();
+  const label = `${from}_${to}`;
+  XLSX.utils.book_append_sheet(wb, _makeSheet(_sheetWorker(from,to)), 'Theo công nhân');
+  XLSX.utils.book_append_sheet(wb, _makeSheet(_sheetTeam(from,to)),   'Theo đội');
+  XLSX.utils.book_append_sheet(wb, _makeSheet(_sheetCat(from,to)),    'Theo hạng mục');
+  XLSX.utils.book_append_sheet(wb, _makeSheet(_sheetDaily(from,to)),  'Theo ngày');
+  XLSX.writeFile(wb, `BCH_BaoCao_TatCa_${label}.xlsx`);
+  toast('✅ Đã xuất Excel đầy đủ 4 sheet');
+}
+
+window.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+init();
+</script>
+
+</body>
+</html>
